@@ -92,32 +92,47 @@ public class MovieService extends com.finals.kinoarena.service.AbstractService {
         return new ResponseMovieDTO(sMovie.get());
     }
 
-    private IMDBMovieDTO getImdbInfo(String title) throws IOException, InterruptedException {
-
-        String url = Constants.API_URL + title.replaceAll("\\s", "");
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("x-rapidapi-key", "fb75dc0fa7mshf37a26ee181e77cp12ffc0jsn8b15cd65c1ee")
-                .header("x-rapidapi-host", "imdb-internet-movie-database-unofficial.p.rapidapi.com")
-                .method("GET", HttpRequest.BodyPublishers.noBody())
-                .build();
-        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-        ObjectMapper om = new ObjectMapper();
-        JsonNode jsonNode = om.readTree(response.body());
-        return new IMDBMovieDTO(jsonNode);
+    private IMDBMovieDTO getImdbInfo(String title) throws IOException, InterruptedException, BadRequestException {
+        if(title==null || title.equals("") ){
+            throw new BadRequestException("searched movie cant be null");
+        }
+        try {
+            String url = Constants.API_URL + title.replaceAll("\\s", "");
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("x-rapidapi-key", "fb75dc0fa7mshf37a26ee181e77cp12ffc0jsn8b15cd65c1ee")
+                    .header("x-rapidapi-host", "imdb-internet-movie-database-unofficial.p.rapidapi.com")
+                    .method("GET", HttpRequest.BodyPublishers.noBody())
+                    .build();
+            HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            ObjectMapper om = new ObjectMapper();
+            JsonNode jsonNode = om.readTree(response.body());
+            return new IMDBMovieDTO(jsonNode);
+        }
+        catch (Exception e){
+            throw new NotFoundException("Problem with the IMDB api");
+        }
     }
 
-    public IMDBDataDTO findMovies(String title) throws IOException, InterruptedException {
-        String url = "https://imdb-internet-movie-database-unofficial.p.rapidapi.com/search/" + title;
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("x-rapidapi-key", "fb75dc0fa7mshf37a26ee181e77cp12ffc0jsn8b15cd65c1ee")
-                .header("x-rapidapi-host", "imdb-internet-movie-database-unofficial.p.rapidapi.com")
-                .method("GET", HttpRequest.BodyPublishers.noBody())
-                .build();
-        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-        ObjectMapper om = new ObjectMapper();
-        JsonNode jsonNode = om.readTree(response.body());
-        return new IMDBDataDTO(jsonNode);
+    public IMDBDataDTO findMovies(String title) throws IOException, InterruptedException, BadRequestException {
+        if(title==null || title.equals("") ){
+            throw new BadRequestException("searched movie cant be null");
+        }
+        try{
+            String url = "https://imdb-internet-movie-database-unofficial.p.rapidapi.com/search/" + title;
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("x-rapidapi-key", "fb75dc0fa7mshf37a26ee181e77cp12ffc0jsn8b15cd65c1ee")
+                    .header("x-rapidapi-host", "imdb-internet-movie-database-unofficial.p.rapidapi.com")
+                    .method("GET", HttpRequest.BodyPublishers.noBody())
+                    .build();
+            HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            ObjectMapper om = new ObjectMapper();
+            JsonNode jsonNode = om.readTree(response.body());
+            return new IMDBDataDTO(jsonNode);
+        }
+        catch (Exception e){
+            throw new NotFoundException("Problem with the IMDB api");
+        }
     }
 }

@@ -55,7 +55,6 @@ public class TicketController extends AbstractController {
     }
 
     private boolean validateSeat(int seat) throws SQLException {
-
-        return seat >= 1 && seat <=seatDAO.getMaxSeatNum();
+        return seat >= 1 && seat <=seatDAO.getMaxSeatNum() ;
     }
 }

@@ -90,7 +90,7 @@ public class ProjectionController extends AbstractController {
     }
 
     private boolean validateStartAt(AddProjectionDTO dto) throws BadRequestException {
-        if (dto.getTime().isBlank()) {
+        if (dto.getTime().isBlank() || dto.getTime()==null) {
             throw new BadRequestException("Please fill all requested fields");
         }
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");

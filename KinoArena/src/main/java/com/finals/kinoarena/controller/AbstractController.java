@@ -40,4 +40,10 @@ public class AbstractController {
     public ErrorDTO handleUserNotFoundException(UnauthorizedException e) {
         return new ErrorDTO(e.getMessage());
     }
+
+    @ExceptionHandler(NumberFormatException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorDTO wrongCredentials(NumberFormatException e){
+        return new ErrorDTO("Wrong credentials in the url");
+    }
 }

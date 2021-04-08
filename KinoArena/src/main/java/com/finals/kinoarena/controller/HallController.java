@@ -30,6 +30,7 @@ public class HallController extends AbstractController {
         if (requestHallDTO.getCapacity() < 50) {
             throw new BadRequestException("Hall capacity must be at least 50");
         }
+
         return hallService.addHall(requestHallDTO, user.getId());
     }
 

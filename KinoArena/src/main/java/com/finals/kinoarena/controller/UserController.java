@@ -108,7 +108,8 @@ public class UserController extends AbstractController {
     }
 
     private boolean validateRegister(RegisterDTO registerDTO) throws BadRequestException {
-        return validateUsername(registerDTO.getUsername()) &&
+        return validateUser(registerDTO) &&
+                validateUsername(registerDTO.getUsername()) &&
                 validatePassword(registerDTO.getPassword()) &&
                 validatePassword(registerDTO.getConfirmPassword()) &&
                 validateEmail(registerDTO.getEmail()) &&
@@ -181,6 +182,14 @@ public class UserController extends AbstractController {
             return true;
         }
         throw new BadRequestException("Username must include only letters and numbers");
+    }
+    private boolean validateUser(RegisterDTO registerDTO) throws BadRequestException {
+        if(registerDTO.getAge()==null || registerDTO.getConfirmPassword()==null
+                || registerDTO.getEmail()==null || registerDTO.getFirstName()==null || registerDTO.getLastName()==null
+                ||registerDTO.getPassword()==null || registerDTO.getStatus()==null || registerDTO.getUsername()==null){
+            throw new BadRequestException("Fields cant be null");
+        }
+        return true;
     }
 
 }

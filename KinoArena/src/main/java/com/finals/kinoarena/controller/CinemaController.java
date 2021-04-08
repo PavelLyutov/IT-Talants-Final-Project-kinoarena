@@ -63,6 +63,9 @@ public class CinemaController extends AbstractController  {
     }
 
     private boolean validateNewCinema(String city, String name) throws BadRequestException {
+        if(city ==null || name == null){
+            throw new BadRequestException("fields cant be null");
+        }
         if (city.isBlank() || name.isBlank()) {
             throw new BadRequestException("Please fill all necessary fields");
         }

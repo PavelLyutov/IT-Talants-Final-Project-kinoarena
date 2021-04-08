@@ -25,7 +25,7 @@ public class TicketService extends AbstractService {
     }
 
     @Transactional
-    public ResponseTicketDTO reserveTicket(int projectionId, User user, ReserveTicketDTO reserveTicketDTO) throws BadRequestException, SQLException {
+    public synchronized ResponseTicketDTO reserveTicket(int projectionId, User user, ReserveTicketDTO reserveTicketDTO) throws BadRequestException, SQLException {
         Optional<Projection> sProjection = projectionRepository.findById(projectionId);
         if (sProjection.isEmpty()) {
             throw new NotFoundException("Projection does not exist");
