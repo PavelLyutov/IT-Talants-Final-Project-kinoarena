@@ -94,7 +94,7 @@ public class MovieService extends com.finals.kinoarena.service.AbstractService {
     }
 
     public JsonNode getImdbInfo(String url) throws BadGetawayException, FileNotFoundException {
-        File file = new File("C:\\Users\\user\\Desktop\\kinoarena\\KinoArena\\src\\main\\java\\com\\finals\\kinoarena\\service\\apikey.txt");
+        File file = new File("D:\\IT-Talant-Final-Project-kinoarena\\IT-Talants-Final-Project-kinoarena\\KinoArena\\src\\main\\java\\com\\finals\\kinoarena\\service\\apikey.txt");
         Scanner scanner = new Scanner(file);
         String key = scanner.nextLine();
         scanner.close();
