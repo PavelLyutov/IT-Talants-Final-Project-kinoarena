@@ -2,19 +2,20 @@ package com.finals.kinoarena.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.finals.kinoarena.model.DTO.IMDBDataDTO;
+import com.finals.kinoarena.model.DTO.AddMovieDTO;
 import com.finals.kinoarena.model.DTO.IMDBMovieDTO;
 import com.finals.kinoarena.util.Constants;
+import com.finals.kinoarena.util.exceptions.BadGetawayException;
 import com.finals.kinoarena.util.exceptions.BadRequestException;
 import com.finals.kinoarena.util.exceptions.NotFoundException;
 import com.finals.kinoarena.util.exceptions.UnauthorizedException;
-import com.finals.kinoarena.model.DTO.RequestMovieDTO;
 import com.finals.kinoarena.model.DTO.ResponseMovieDTO;
 import com.finals.kinoarena.model.entity.Genre;
-import com.finals.kinoarena.model.entity.Movie;;
+import com.finals.kinoarena.model.entity.Movie;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -22,6 +23,7 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Scanner;
 
 @Service
 public class MovieService extends com.finals.kinoarena.service.AbstractService {
@@ -46,37 +48,36 @@ public class MovieService extends com.finals.kinoarena.service.AbstractService {
         return movies;
     }
 
-    public ResponseMovieDTO addMovie(RequestMovieDTO requestMovieDTO, int userId) throws BadRequestException, UnauthorizedException, IOException, InterruptedException {
+    public ResponseMovieDTO addMovie(AddMovieDTO addMovieDTO, int userId) throws BadRequestException, UnauthorizedException, BadGetawayException, FileNotFoundException {
         if (!isAdmin(userId)) {
             throw new UnauthorizedException("Only admins can add movies");
         }
-        Movie sMovie = movieRepository.findByTitle(requestMovieDTO.getTitle());
+        Movie sMovie = movieRepository.findByTitle(addMovieDTO.getTitle());
         if (sMovie != null) {
             throw new BadRequestException("There is already a movie with that title");
         }
-        Optional<Genre> sGenre = genreRepository.findById(requestMovieDTO.getGenreId());
+        Optional<Genre> sGenre = genreRepository.findById(addMovieDTO.getGenreId());
         if (sGenre.isEmpty()) {
             throw new BadRequestException("Invalid genre");
         }
-
-        String title = requestMovieDTO.getTitle();
-        IMDBMovieDTO imdb = getImdbInfo(title);
-        if (imdb.getImdbId().isBlank()){
-            throw new BadRequestException("Movie with that name does not exist");
+        String title = addMovieDTO.getTitle().replaceAll("\\s", "");
+        IMDBMovieDTO imdb = new IMDBMovieDTO(getImdbInfo(Constants.API_URL_SEARCH_BY_NAME + title));
+        if (imdb.getImdbId().isBlank() || imdb.getImdbId() == null) {
+            throw new BadRequestException("Movie with that title does not exist");
         }
-
-        Genre genre = sGenre.get();
-        Movie movie = new Movie(requestMovieDTO);
-        movie.setTitle(imdb.getTitle());
-        movie.setGenre(genre);
-        movie.setImdbId(imdb.getImdbId());
-        movie.setYear(imdb.getYear());
-        movie.setLength(imdb.getLength());
-        movie.setPlot(imdb.getPlot());
-        movie.setRating(imdb.getRating());
-        movie.setPoster(imdb.getPoster());
-        movie.setLeadingActor(imdb.getLead());
-
+        Movie movie = Movie.builder()
+                .title(imdb.getTitle())
+                .year(imdb.getYear())
+                .plot(imdb.getPlot())
+                .length(imdb.getLength())
+                .rating(imdb.getRating())
+                .ageRestriction(addMovieDTO.getAgeRestriction())
+                .leadingActor(imdb.getLead())
+                .genre(sGenre.get())
+                .poster(imdb.getPoster())
+                .imdbId(imdb.getImdbId())
+                .projections(new ArrayList<>())
+                .build();
         return new ResponseMovieDTO(movieRepository.save(movie));
     }
 
@@ -92,47 +93,25 @@ public class MovieService extends com.finals.kinoarena.service.AbstractService {
         return new ResponseMovieDTO(sMovie.get());
     }
 
-    private IMDBMovieDTO getImdbInfo(String title) throws IOException, InterruptedException, BadRequestException {
-        if(title==null || title.equals("") ){
-            throw new BadRequestException("searched movie cant be null");
-        }
+    public JsonNode getImdbInfo(String url) throws BadGetawayException, FileNotFoundException {
+        File file = new File("C:\\Users\\user\\Desktop\\kinoarena\\KinoArena\\src\\main\\java\\com\\finals\\kinoarena\\service\\apikey.txt");
+        Scanner scanner = new Scanner(file);
+        String key = scanner.nextLine();
+        scanner.close();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("x-rapidapi-key",key)
+                .header("x-rapidapi-host", "imdb-internet-movie-database-unofficial.p.rapidapi.com")
+                .method("GET", HttpRequest.BodyPublishers.noBody())
+                .build();
+        JsonNode jsonNode;
         try {
-            String url = Constants.API_URL + title.replaceAll("\\s", "");
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("x-rapidapi-key", "fb75dc0fa7mshf37a26ee181e77cp12ffc0jsn8b15cd65c1ee")
-                    .header("x-rapidapi-host", "imdb-internet-movie-database-unofficial.p.rapidapi.com")
-                    .method("GET", HttpRequest.BodyPublishers.noBody())
-                    .build();
             HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
             ObjectMapper om = new ObjectMapper();
-            JsonNode jsonNode = om.readTree(response.body());
-            return new IMDBMovieDTO(jsonNode);
+            jsonNode = om.readTree(response.body());
+        } catch (Exception e) {
+            throw new BadGetawayException("Cannot connect to IMDB,please try again later");
         }
-        catch (Exception e){
-            throw new NotFoundException("Problem with the IMDB api");
-        }
-    }
-
-    public IMDBDataDTO findMovies(String title) throws IOException, InterruptedException, BadRequestException {
-        if(title==null || title.equals("") ){
-            throw new BadRequestException("searched movie cant be null");
-        }
-        try{
-            String url = "https://imdb-internet-movie-database-unofficial.p.rapidapi.com/search/" + title;
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("x-rapidapi-key", "fb75dc0fa7mshf37a26ee181e77cp12ffc0jsn8b15cd65c1ee")
-                    .header("x-rapidapi-host", "imdb-internet-movie-database-unofficial.p.rapidapi.com")
-                    .method("GET", HttpRequest.BodyPublishers.noBody())
-                    .build();
-            HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-            ObjectMapper om = new ObjectMapper();
-            JsonNode jsonNode = om.readTree(response.body());
-            return new IMDBDataDTO(jsonNode);
-        }
-        catch (Exception e){
-            throw new NotFoundException("Problem with the IMDB api");
-        }
+        return jsonNode;
     }
 }

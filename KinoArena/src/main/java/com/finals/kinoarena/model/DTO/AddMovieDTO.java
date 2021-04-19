@@ -7,22 +7,19 @@ import lombok.Setter;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.time.LocalDateTime;
 
-@NoArgsConstructor
-@Setter
 @Getter
-public class RequestMovieDTO {
+@Setter
+@NoArgsConstructor
+public class AddMovieDTO {
 
-    @NotNull(message = "Please fill all necessary fields")
-    @Min(value = 1,message = "Movie Id cannot be less than 1")
-    private Integer movieId;
-    @NotNull(message = "Please fill all necessary fields")
-    @Min(value = 1,message = "Hall Id cannot be less than 1")
-    private Integer hallId;
     @NotBlank(message = "Please fill all necessary fields")
     @NotNull(message = "Please fill all necessary fields")
-    private String time;
-    private LocalDateTime startAt;
-
+    private String title;
+    @NotNull(message = "Please fill all necessary fields")
+    @Min(value = 3,message = "Age restriction cannot be less than 3")
+    private Integer ageRestriction;
+    @NotNull(message = "Please fill all necessary fields")
+    @Min(value = 1,message = "Genre Id cannot be less than 1")
+    private Integer genreId;
 }
