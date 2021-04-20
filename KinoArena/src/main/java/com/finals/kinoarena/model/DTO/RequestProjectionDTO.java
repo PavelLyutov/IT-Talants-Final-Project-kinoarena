@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Setter
 @Getter
-public class RequestMovieDTO {
+public class RequestProjectionDTO {
 
     @NotNull(message = "Please fill all necessary fields")
     @Min(value = 1,message = "Movie Id cannot be less than 1")

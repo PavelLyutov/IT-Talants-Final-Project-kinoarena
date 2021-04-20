@@ -3,7 +3,7 @@ package com.finals.kinoarena.controller;
 import com.finals.kinoarena.model.DTO.GenreDTO;
 import com.finals.kinoarena.util.exceptions.BadRequestException;
 import com.finals.kinoarena.util.exceptions.UnauthorizedException;
-import com.finals.kinoarena.model.DTO.RequestMovieDTO;
+import com.finals.kinoarena.model.DTO.RequestProjectionDTO;
 import com.finals.kinoarena.model.DTO.ResponseProjectionDTO;
 import com.finals.kinoarena.model.entity.User;
 import com.finals.kinoarena.service.ProjectionService;
@@ -50,22 +50,22 @@ public class ProjectionController extends AbstractController {
     }
 
     @PostMapping(value = "/projections")
-    public ResponseProjectionDTO addProjection(@Valid @RequestBody RequestMovieDTO requestMovieDTO, HttpSession ses) throws BadRequestException, UnauthorizedException, SQLException {
+    public ResponseProjectionDTO addProjection(@Valid @RequestBody RequestProjectionDTO requestProjectionDTO, HttpSession ses) throws BadRequestException, UnauthorizedException, SQLException {
         User user = sessionManager.getLoggedUser(ses);
-        if (!validateStartAt(requestMovieDTO)) {
+        if (!validateStartAt(requestProjectionDTO)) {
             throw new BadRequestException("Please fill all requested fields");
         }
-        return projectionService.addProjection(requestMovieDTO, user.getId());
+        return projectionService.addProjection(requestProjectionDTO, user.getId());
     }
 
     @PutMapping(value = "/projections/{projection_id}")
-    public ResponseProjectionDTO editProjection(@Valid @RequestBody RequestMovieDTO requestMovieDTO, HttpSession ses,
+    public ResponseProjectionDTO editProjection(@Valid @RequestBody RequestProjectionDTO requestProjectionDTO, HttpSession ses,
                                                 @PathVariable(name = "projection_id") int projectionId) throws BadRequestException, UnauthorizedException {
         User user = sessionManager.getLoggedUser(ses);
-        if (!validateStartAt(requestMovieDTO)) {
+        if (!validateStartAt(requestProjectionDTO)) {
             throw new BadRequestException("Please fill all requested fields");
         }
-        return projectionService.editProjection(user.getId(), requestMovieDTO,projectionId);
+        return projectionService.editProjection(user.getId(), requestProjectionDTO,projectionId);
     }
 
     @DeleteMapping(value = "/projections/{projection_id}")
@@ -79,7 +79,7 @@ public class ProjectionController extends AbstractController {
         return projectionService.getAllGenres();
     }
 
-    private boolean validateStartAt(RequestMovieDTO dto) throws BadRequestException {
+    private boolean validateStartAt(RequestProjectionDTO dto) throws BadRequestException {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         LocalDateTime dateTime = LocalDateTime.parse(dto.getTime(), formatter);
         if (dateTime.isAfter(LocalDateTime.now())) {

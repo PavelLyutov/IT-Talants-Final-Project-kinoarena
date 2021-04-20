@@ -7,6 +7,7 @@ import com.finals.kinoarena.util.exceptions.UnauthorizedException;
 import com.finals.kinoarena.model.DTO.*;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,19 +24,19 @@ public class ProjectionService extends AbstractService {
         return new ResponseProjectionDTO(sProjection.get());
     }
 
-    public ResponseProjectionDTO addProjection(RequestMovieDTO requestMovieDTO, int userId) throws BadRequestException, UnauthorizedException {
+    public ResponseProjectionDTO addProjection(RequestProjectionDTO requestProjectionDTO, int userId) throws BadRequestException, UnauthorizedException {
         if (!isAdmin(userId)) {
             throw new UnauthorizedException("Only admins can add projections");
         }
-        Optional<Hall> sHall = hallRepository.findById(requestMovieDTO.getHallId());
+        Optional<Hall> sHall = hallRepository.findById(requestProjectionDTO.getHallId());
         if (sHall.isEmpty()) {
             throw new NotFoundException("Hall not found");
         }
         Hall hall = sHall.get();
-        if (!projectionValidation(requestMovieDTO, hall)) {
+        if (!projectionValidation(requestProjectionDTO, hall)) {
             throw new BadRequestException("There is already a projection during this time in the hall");
         }
-        Optional<Movie> sMovie = movieRepository.findById(requestMovieDTO.getMovieId());
+        Optional<Movie> sMovie = movieRepository.findById(requestProjectionDTO.getMovieId());
         if (sMovie.isEmpty()) {
             throw new NotFoundException("Movie with that Id does not exist");
         }
@@ -43,8 +44,8 @@ public class ProjectionService extends AbstractService {
         Projection projection = Projection.builder()
                 .movie(movie)
                 .hall(hall)
-                .startAt(requestMovieDTO.getStartAt())
-                .endAt(requestMovieDTO.getStartAt().plusMinutes(movie.getLength()))
+                .startAt(requestProjectionDTO.getStartAt())
+                .endAt(requestProjectionDTO.getStartAt().plusMinutes(movie.getLength()))
                 .reservedSeats(new ArrayList<>())
                 .build();
         return new ResponseProjectionDTO(projectionRepository.save(projection));
@@ -58,10 +59,10 @@ public class ProjectionService extends AbstractService {
         return seatDAO.getReservedSeats(projectionId);
     }
 
-    private boolean projectionValidation(RequestMovieDTO requestMovieDTO, Hall hall) throws BadRequestException {
+    private boolean projectionValidation(RequestProjectionDTO requestProjectionDTO, Hall hall) throws BadRequestException {
         List<Projection> projections = projectionRepository.findByHall(hall);
         for (Projection p : projections) {
-            if (isBetween(p.getStartAt(), p.getEndAt(), requestMovieDTO.getStartAt())) {
+            if (isBetween(p.getStartAt(), p.getEndAt(), requestProjectionDTO.getStartAt())) {
                 throw new BadRequestException("There is already a projection during this time");
             }
         }
@@ -127,27 +128,27 @@ public class ProjectionService extends AbstractService {
         return projectionDTOS;
     }
 
-    public ResponseProjectionDTO editProjection(int userId, RequestMovieDTO requestMovieDTO, int projectionId) throws BadRequestException, UnauthorizedException {
+    public ResponseProjectionDTO editProjection(int userId, RequestProjectionDTO requestProjectionDTO, int projectionId) throws BadRequestException, UnauthorizedException {
         if (!isAdmin(userId)) {
             throw new UnauthorizedException("Only admins can edit projections");
         }
-        Optional<Hall> sHall = hallRepository.findById(requestMovieDTO.getHallId());
+        Optional<Hall> sHall = hallRepository.findById(requestProjectionDTO.getHallId());
         if (sHall.isEmpty()) {
             throw new NotFoundException("Hall not found");
         }
         Hall hall = sHall.get();
-        if (!projectionValidation(requestMovieDTO, hall)) {
+        if (!projectionValidation(requestProjectionDTO, hall)) {
             throw new BadRequestException("There is already a projection during this time in the hall");
         }
-        Optional<Movie> sMovie = movieRepository.findById(requestMovieDTO.getMovieId());
+        Optional<Movie> sMovie = movieRepository.findById(requestProjectionDTO.getMovieId());
         if (sMovie.isEmpty()) {
             throw new NotFoundException("Movie with that id does not exist");
         }
         Projection projection = projectionRepository.findById(projectionId).get();
         projection.setHall(sHall.get());
         projection.setMovie(sMovie.get());
-        projection.setStartAt(requestMovieDTO.getStartAt());
-        projection.setEndAt(requestMovieDTO.getStartAt().plusMinutes(projection.getMovie().getLength()));
+        projection.setStartAt(requestProjectionDTO.getStartAt());
+        projection.setEndAt(requestProjectionDTO.getStartAt().plusMinutes(projection.getMovie().getLength()));
         return new ResponseProjectionDTO(projectionRepository.save(projection));
     }
 
